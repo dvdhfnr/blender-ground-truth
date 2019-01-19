@@ -23,3 +23,4 @@ print(np.array_equal(r, g) and np.array_equal(r, b))
 
 plt.imshow(np.ma.masked_where(r == 0, r), cmap="jet")
 plt.colorbar()
+plt.show()
