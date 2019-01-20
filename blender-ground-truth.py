@@ -82,7 +82,7 @@ def normal_to_rgb(n_x, n_y, n_z):
 
 
 def flow_to_rgb(u, v):
-    r = u * u + v * v
+    r = np.sqrt(u * u + v * v)
 
     if r.max() > 0:
         r /= r.max()
@@ -91,10 +91,10 @@ def flow_to_rgb(u, v):
     phi = (phi / np.pi + 1) / 2
 
     invalid = (r == 0)
-    s = np.where(invalid, 0, 1)
-    r[invalid] = 0.5
+    v = np.where(invalid, 0.5, 1)
+    r[invalid] = 0
 
-    hsv = np.stack((phi, s, r), axis=2)
+    hsv = np.stack((phi, r, v), axis=2)
     rgb = mpcolors.hsv_to_rgb(hsv)
 
     return rgb
