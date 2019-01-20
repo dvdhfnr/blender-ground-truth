@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import matplotlib.colors as mpcolors
+from copy import copy
+
 
 def read_depth(filename):
     f = OpenEXR.InputFile(filename)
@@ -52,27 +54,29 @@ def read_flow(filename):
     dw = f.header()['dataWindow']
     sz = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
 
-    u_fw = np.frombuffer(r, dtype=np.float32)
-    u_fw.resize(sz[::-1])
-
-    v_fw = np.frombuffer(g, dtype=np.float32)
-    v_fw.resize(sz[::-1])
-
-    u_bw = np.frombuffer(b, dtype=np.float32)
+    u_bw = np.frombuffer(r, dtype=np.float32)
     u_bw.resize(sz[::-1])
 
-    v_bw = np.frombuffer(a, dtype=np.float32)
+    v_bw = np.frombuffer(g, dtype=np.float32)
     v_bw.resize(sz[::-1])
 
-    return u_fw, v_fw, u_bw, v_bw
+    u_fw = -np.frombuffer(b, dtype=np.float32)
+    u_fw.resize(sz[::-1])
+
+    v_fw = -np.frombuffer(a, dtype=np.float32)
+    v_fw.resize(sz[::-1])
+
+    return u_bw, v_bw, u_fw, v_fw
 
 
 def normal_to_rgb(n_x, n_y, n_z):
-    rgb = np.empty(np.append(n_x.shape, 3))
+    rgb = 0.5 * np.ones(np.append(n_x.shape, 3))
 
-    rgb[:, :, 0] = (n_x + 1) / 2
-    rgb[:, :, 1] = (n_y + 1) / 2
-    rgb[:, :, 2] = n_z
+    valid = np.logical_not(np.logical_and(np.logical_and(n_x == 0, n_y == 0), n_z == 0))
+
+    rgb[valid, 0] = (n_x[valid] + 1) / 2
+    rgb[valid, 1] = (n_y[valid] + 1) / 2
+    rgb[valid, 2] = n_z[valid]
 
     return rgb
 
@@ -86,10 +90,11 @@ def flow_to_rgb(u, v):
     phi = np.arctan2(v, u)
     phi = (phi / np.pi + 1) / 2
 
-    valid = r
-    valid[valid > 0] = 1
+    invalid = (r == 0)
+    s = np.where(invalid, 0, 1)
+    r[invalid] = 0.5
 
-    hsv = np.stack((r, valid, phi), axis=2)
+    hsv = np.stack((phi, s, r), axis=2)
     rgb = mpcolors.hsv_to_rgb(hsv)
 
     return rgb
@@ -97,6 +102,9 @@ def flow_to_rgb(u, v):
 
 if __name__ == "__main__":
     print("Blender-Ground-Truth")
+
+    palette = copy(plt.cm.jet)
+    palette.set_bad('gray', 1.)
 
     # image
     image = mpimg.imread("image0001.png")
@@ -110,14 +118,14 @@ if __name__ == "__main__":
 
     plt.subplot(322)
     plt.title("label")
-    plt.imshow(np.ma.masked_where(label == 0, label), cmap="jet")
+    plt.imshow(np.ma.masked_where(label == 0, label), cmap=palette)
 
     # depth
     depth = read_depth("depth0001.exr")
 
     plt.subplot(323)
     plt.title("depth")
-    plt.imshow(np.ma.masked_where(depth == 1e10, depth), cmap="jet")
+    plt.imshow(np.ma.masked_where(depth == 1e10, depth), cmap=palette)
 
     # normal
     (n_x, n_y, n_z) = read_normal("normal0001.exr")
@@ -125,10 +133,10 @@ if __name__ == "__main__":
     plt.subplot(324)
     plt.title("normal")
     normal = normal_to_rgb(n_x, n_y, n_z)
-    plt.imshow(normal, cmap="jet")
+    plt.imshow(normal)
 
     # flow
-    (u_fw, v_fw, u_bw, v_bw) = read_flow("flow0001.exr")
+    (u_bw, v_bw, u_fw, v_fw) = read_flow("flow0001.exr")
 
     plt.subplot(325)
     plt.title("forward flow")
@@ -140,4 +148,5 @@ if __name__ == "__main__":
     flow_bw = flow_to_rgb(u_bw, v_bw)
     plt.imshow(flow_bw)
 
+    plt.tight_layout()
     plt.show()
