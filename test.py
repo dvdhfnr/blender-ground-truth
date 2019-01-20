@@ -3,35 +3,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def read_normal(filename):
+def read_depth(filename):
     f = OpenEXR.InputFile(filename)
-    (r, g, b) = f.channels("RGB")
+
+    (r, a) = f.channels("RA")
     dw = f.header()['dataWindow']
     sz = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
 
-    n_x = np.frombuffer(r, dtype=np.float32)
-    n_x.resize(sz[::-1])
+    data = np.frombuffer(r, dtype=np.float32)
+    data.resize(sz[::-1])
 
-    n_y = np.frombuffer(g, dtype=np.float32)
-    n_y.resize(sz[::-1])
+    d = np.frombuffer(a, dtype=np.float32)
+    d.resize(sz[::-1])
 
-    n_z = np.frombuffer(b, dtype=np.float32)
-    n_z.resize(sz[::-1])
-
-    return n_x, n_y, n_z
+    return data, d
 
 
 if __name__ == "__main__":
-    print("Blender-Ground-Truth")
+    print("Test")
 
-    (n_x, n_y, n_z) = read_normal("normal0001.exr")
+    # depth
+    depth, d = read_depth("depth0001.exr")
 
-    valid = np.logical_not(np.logical_and(np.logical_and(n_x == 0, n_y == 0), n_z == 0))
-
-    rgb = 0.5 * np.ones(np.append(n_x.shape, 3))
-    rgb[valid, 0] = n_x[valid]
-    rgb[valid, 1] = n_y[valid]
-    rgb[valid, 2] = n_z[valid]
-
-    plt.imshow(rgb)
-    plt.show()
+    plt.title("depth")
+    plt.imshow(np.ma.masked_where(d >= 1e10, d), cmap="jet")

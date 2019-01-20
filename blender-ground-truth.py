@@ -107,28 +107,28 @@ if __name__ == "__main__":
     palette.set_bad('gray', 1.)
 
     # image
-    image = mpimg.imread("image0001.png")
+    image = mpimg.imread("output/image0002.png")
 
     plt.subplot(321)
     plt.title("image")
     plt.imshow(image)
 
     # label
-    label = read_label("label0001.exr")
+    label = read_label("output/label0002.exr")
 
     plt.subplot(322)
     plt.title("label")
     plt.imshow(np.ma.masked_where(label == 0, label), cmap=palette)
 
     # depth
-    depth = read_depth("depth0001.exr")
+    depth = read_depth("output/depth0002.exr")
 
     plt.subplot(323)
     plt.title("depth")
-    plt.imshow(np.ma.masked_where(depth == 1e10, depth), cmap=palette)
+    plt.imshow(np.ma.masked_where(depth >= 1e10, depth), cmap=palette)
 
     # normal
-    (n_x, n_y, n_z) = read_normal("normal0001.exr")
+    (n_x, n_y, n_z) = read_normal("output/normal0002.exr")
 
     plt.subplot(324)
     plt.title("normal")
@@ -136,17 +136,17 @@ if __name__ == "__main__":
     plt.imshow(normal)
 
     # flow
-    (u_bw, v_bw, u_fw, v_fw) = read_flow("flow0001.exr")
+    (u_bw, v_bw, u_fw, v_fw) = read_flow("output/flow0002.exr")
 
     plt.subplot(325)
-    plt.title("forward flow")
-    flow_fw = flow_to_rgb(u_fw, v_fw)
-    plt.imshow(flow_fw)
-
-    plt.subplot(326)
     plt.title("backward flow")
     flow_bw = flow_to_rgb(u_bw, v_bw)
     plt.imshow(flow_bw)
+
+    plt.subplot(326)
+    plt.title("forward flow")
+    flow_fw = flow_to_rgb(u_fw, v_fw)
+    plt.imshow(flow_fw)
 
     plt.tight_layout()
     plt.show()
