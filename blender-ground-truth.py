@@ -103,32 +103,34 @@ def flow_to_rgb(u, v):
 if __name__ == "__main__":
     print("Blender-Ground-Truth")
 
+    inpath = "output/scene"
+
     palette = copy(plt.cm.jet)
     palette.set_bad('gray', 1.)
 
     # image
-    image = mpimg.imread("output/image0002.png")
+    image = mpimg.imread(inpath + "/image0002.png")
 
     plt.subplot(321)
     plt.title("image")
     plt.imshow(image)
 
     # label
-    label = read_label("output/label0002.exr")
+    label = read_label(inpath + "/label0002.exr")
 
     plt.subplot(322)
     plt.title("label")
     plt.imshow(np.ma.masked_where(label == 0, label), cmap=palette)
 
     # depth
-    depth = read_depth("output/depth0002.exr")
+    depth = read_depth(inpath + "/depth0002.exr")
 
     plt.subplot(323)
     plt.title("depth")
     plt.imshow(np.ma.masked_where(depth >= 1e10, depth), cmap=palette)
 
     # normal
-    (n_x, n_y, n_z) = read_normal("output/normal0002.exr")
+    (n_x, n_y, n_z) = read_normal(inpath + "/normal0002.exr")
 
     plt.subplot(324)
     plt.title("normal")
@@ -136,7 +138,7 @@ if __name__ == "__main__":
     plt.imshow(normal)
 
     # flow
-    (u_bw, v_bw, u_fw, v_fw) = read_flow("output/flow0002.exr")
+    (u_bw, v_bw, u_fw, v_fw) = read_flow(inpath + "/flow0002.exr")
 
     plt.subplot(325)
     plt.title("backward flow")
