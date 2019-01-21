@@ -88,7 +88,7 @@ def flow_to_rgb(u, v):
         r /= r.max()
 
     phi = np.arctan2(v, u)
-    phi = (phi / np.pi + 1) / 2
+    phi = (np.where(phi < 0, 2 * np.pi, 0) + phi) / (2 * np.pi)
 
     invalid = (r == 0)
     v = np.where(invalid, 0.5, 1)
