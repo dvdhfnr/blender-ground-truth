@@ -7,7 +7,7 @@ def read_depth(filename):
     f = OpenEXR.InputFile(filename)
 
     (r, a) = f.channels("RA")
-    dw = f.header()['dataWindow']
+    dw = f.header()["dataWindow"]
     sz = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
 
     data = np.frombuffer(r, dtype=np.float32)

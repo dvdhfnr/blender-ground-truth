@@ -4,12 +4,13 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import matplotlib.colors as mpcolors
 from copy import copy
+import argparse
 
 
 def read_depth(filename):
     f = OpenEXR.InputFile(filename)
     r = f.channel("R")
-    dw = f.header()['dataWindow']
+    dw = f.header()["dataWindow"]
     sz = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
 
     data = np.frombuffer(r, dtype=np.float32)
@@ -21,7 +22,7 @@ def read_depth(filename):
 def read_label(filename):
     f = OpenEXR.InputFile(filename)
     r = f.channel("R")
-    dw = f.header()['dataWindow']
+    dw = f.header()["dataWindow"]
     sz = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
 
     data = np.frombuffer(r, dtype=np.int32)
@@ -33,7 +34,7 @@ def read_label(filename):
 def read_normal(filename):
     f = OpenEXR.InputFile(filename)
     (r, g, b) = f.channels("RGB")
-    dw = f.header()['dataWindow']
+    dw = f.header()["dataWindow"]
     sz = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
 
     n_x = np.frombuffer(r, dtype=np.float32)
@@ -51,7 +52,7 @@ def read_normal(filename):
 def read_flow(filename):
     f = OpenEXR.InputFile(filename)
     (r, g, b, a) = f.channels("RGBA")
-    dw = f.header()['dataWindow']
+    dw = f.header()["dataWindow"]
     sz = (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1)
 
     u_bw = np.frombuffer(r, dtype=np.float32)
@@ -90,7 +91,7 @@ def flow_to_rgb(u, v):
     phi = np.arctan2(v, u)
     phi = (np.where(phi < 0, 2 * np.pi, 0) + phi) / (2 * np.pi)
 
-    invalid = (r == 0)
+    invalid = r == 0
     v = np.where(invalid, 0.5, 1)
     r[invalid] = 0
 
@@ -101,36 +102,38 @@ def flow_to_rgb(u, v):
 
 
 if __name__ == "__main__":
-    print("Blender-Ground-Truth")
-
-    inpath = "output/scene"
+    parser = argparse.ArgumentParser(description="Blender-Ground-Truth")
+    parser.add_argument(
+        "-i", "--inpath", type=str, help="input path", default="output/scene"
+    )
+    args = parser.parse_args()
 
     palette = copy(plt.cm.jet)
-    palette.set_bad('gray', 1.)
+    palette.set_bad("gray", 1.0)
 
     # image
-    image = mpimg.imread(inpath + "/image0002.png")
+    image = mpimg.imread(args.inpath + "/image0002.png")
 
     plt.subplot(321)
     plt.title("image")
     plt.imshow(image)
 
     # label
-    label = read_label(inpath + "/label0002.exr")
+    label = read_label(args.inpath + "/label0002.exr")
 
     plt.subplot(322)
     plt.title("label")
     plt.imshow(np.ma.masked_where(label == 0, label), cmap=palette)
 
     # depth
-    depth = read_depth(inpath + "/depth0002.exr")
+    depth = read_depth(args.inpath + "/depth0002.exr")
 
     plt.subplot(323)
     plt.title("depth")
     plt.imshow(np.ma.masked_where(depth >= 1e10, depth), cmap=palette)
 
     # normal
-    (n_x, n_y, n_z) = read_normal(inpath + "/normal0002.exr")
+    (n_x, n_y, n_z) = read_normal(args.inpath + "/normal0002.exr")
 
     plt.subplot(324)
     plt.title("normal")
@@ -138,7 +141,7 @@ if __name__ == "__main__":
     plt.imshow(normal)
 
     # flow
-    (u_bw, v_bw, u_fw, v_fw) = read_flow(inpath + "/flow0002.exr")
+    (u_bw, v_bw, u_fw, v_fw) = read_flow(args.inpath + "/flow0002.exr")
 
     plt.subplot(325)
     plt.title("backward flow")
